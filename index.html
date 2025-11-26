@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet"> -->
+    <title>Карусель арабских букв</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Amiri', 'Scheherazade New', 'Arial Unicode MS', sans-serif;
+            background: #f9f9f9;
+            padding: 20px;
+            direction: rtl;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .carousel {
+            background: white;
+            padding: 40px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+            min-height: 240px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .letter-name {
+            font-size: 30px;
+            margin-bottom: 20px;
+            color: rgb(46, 204, 113);
+            font-weight: 600;
+        }
+
+        .forms {
+            font-size: 48px;
+            line-height: 1.6;
+            direction: ltr;
+            text-align: center;
+            font-weight: bold;
+            white-space: pre-line;
+        }
+
+        .initial {
+            color: #2980b9;
+        }
+
+        .medial {
+            color: #e74c3c;
+        }
+
+        .final {
+            color: #2980b9;
+        }
+
+        .nav-buttons {
+            margin-top: 25px;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin: 0 4px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn.auto-on {
+            background: #2ecc71;
+        }
+
+        .btn.auto-on:hover {
+            background: #27ae60;
+        }
+
+        .btn.auto-off {
+            background: #e74c3c;
+        }
+
+        .btn.auto-off:hover {
+            background: #c0392b;
+        }
+
+        .counter {
+            margin-top: 15px;
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Карусель арабских букв</h1>
+
+        <div class="carousel" id="carousel">
+            <div class="letter-name" id="letterName">Ба</div>
+
+            <div class="forms" id="forms">بَ بِ بُ
+                بَـ ـبِـ ـبُ
+                بَبِبُ</div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="btn" id="prev">❮</button>
+            <button class="btn auto-on" id="playBtn">▶</button>
+            <button class="btn auto-off" id="stopBtn" style="display: none;">⏹</button>
+            <button class="btn" id="next">❯</button>
+        </div>
+        <div class="counter" id="counter">1 / 28</div>
+    </div>
+
+    <script>
+        const letters = [
+            ['ب', 'Ба'],
+            ['ت', 'Та'],
+            ['ث', 'Са'],
+            ['ج', 'Джим'],
+            ['ح', 'Хьа'],
+            ['خ', 'Хо'],
+            ['د', 'Даль'],
+            ['ذ', 'Заль'],
+            ['ر', 'Ро'],
+            ['ز', 'За'],
+            ['س', 'Син'],
+            ['ش', 'Щин'],
+            ['ص', 'Сод'],
+            ['ض', 'ДIод'],
+            ['ط', 'ТIо'],
+            ['ظ', 'ЗIо'],
+            ['ع', 'Iаин'],
+            ['غ', 'ГIоин'],
+            ['ف', 'Фа'],
+            ['ق', 'Къоф'],
+            ['ك', 'Каф'],
+            ['ل', 'Лям'],
+            ['م', 'Мим'],
+            ['ن', 'Нун'],
+            ['ه', 'ХIа'],
+            ['و', 'Ваув'],
+            ['ي', 'Йа'],
+            ['ا', 'Алиф']
+        ];
+
+        const carousel = document.getElementById('carousel');
+        const letterNameEl = document.getElementById('letterName');
+        const formsEl = document.getElementById('forms');
+        const counterEl = document.getElementById('counter');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
+        let currentIndex = 0;
+        let autoPlayInterval = null;
+        const AUTO_PLAY_DELAY = 3000;
+
+        const fatHa = '\u064E'; // ـَ
+        const kasRa = '\u0650'; // ـِ
+        const damMa = '\u064F'; // ـُ
+        const tatweelChar = 'ـ';
+
+        function getForms(letter) {
+            const nonConnecting = ['د', 'ذ', 'ر', 'ز', 'و', 'ا'];
+            const isNonConnecting = nonConnecting.includes(letter);
+
+            const l1 = `${letter}${fatHa}  ${letter}${kasRa}  ${letter}${damMa}`;
+
+            let initialForm, medialForm, finalForm;
+
+            if (isNonConnecting) {
+                initialForm = `${letter}${fatHa}`;
+                medialForm = `${tatweelChar}${letter}${kasRa}`;
+                finalForm = `${tatweelChar}${letter}${damMa}`;
+            } else {
+                initialForm = `${letter}${fatHa}${tatweelChar}`;
+                medialForm = `ـ${letter}${kasRa}ـ`;
+                finalForm = `ـ${letter}${damMa}`;
+            }
+
+            const l2 = `${initialForm}  ${medialForm}  ${finalForm}`;
+            const l3 = `${letter}${fatHa}${letter}${kasRa}${letter}${damMa}`;
+
+            return [l1, l2, l3].join('\n');
+        }
+
+        function updateSlide(index) {
+            const [letter, name] = letters[index];
+            letterNameEl.textContent = name; // Только русское название
+
+            const formsText = getForms(letter);
+            let html = formsText
+                .replace(new RegExp(letter + fatHa, 'g'), `<span class="initial">${letter + fatHa}</span>`)
+                .replace(new RegExp(letter + kasRa, 'g'), `<span class="medial">${letter + kasRa}</span>`)
+                .replace(new RegExp(letter + damMa, 'g'), `<span class="final">${letter + damMa}</span>`);
+
+            formsEl.innerHTML = html;
+            counterEl.textContent = `${index + 1} / ${letters.length}`;
+        }
+
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % letters.length;
+            updateSlide(currentIndex);
+        }
+
+        function prevSlide() {
+            currentIndex = (currentIndex - 1 + letters.length) % letters.length;
+            updateSlide(currentIndex);
+        }
+
+        function startAutoPlay() {
+            if (autoPlayInterval) clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(nextSlide, AUTO_PLAY_DELAY);
+            playBtn.style.display = 'none';
+            stopBtn.style.display = 'inline-block';
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+            stopBtn.style.display = 'none';
+            playBtn.style.display = 'inline-block';
+        }
+
+        playBtn.addEventListener('click', startAutoPlay);
+        stopBtn.addEventListener('click', stopAutoPlay);
+
+        prevBtn.addEventListener('click', () => {
+            stopAutoPlay();
+            prevSlide();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            stopAutoPlay();
+            nextSlide();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                stopAutoPlay();
+                prevSlide();
+            } else if (e.key === 'ArrowRight') {
+                stopAutoPlay();
+                nextSlide();
+            }
+        });
+
+        carousel.addEventListener('mouseenter', stopAutoPlay);
+        carousel.addEventListener('mouseleave', () => {
+            // Автопрокрутка не возобновляется автоматически
+        });
+
+        // Инициализация — без автопрокрутки
+        updateSlide(currentIndex);
+    </script>
+</body>
+
+</html>
