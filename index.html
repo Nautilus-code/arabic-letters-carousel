@@ -306,7 +306,7 @@
             }
 
             const trackNumber = String(index + 1).padStart(2, '0');
-            const audioPath = `../abjad/tracks/track${trackNumber}.ogg`;
+            const audioPath = `./abjad/tracks/track${trackNumber}.ogg`;
 
             currentAudio = new Audio(audioPath);
             currentAudio.onended = () => {
