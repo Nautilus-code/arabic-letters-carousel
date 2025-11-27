@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- <link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet"> -->
     <title>Карусель арабских букв</title>
     <style>
         * {
@@ -12,7 +11,6 @@
         }
 
         body {
-            font-family: 'Amiri', 'Scheherazade New', 'Arial Unicode MS', sans-serif;
             background: #f9f9f9;
             padding: 20px;
             direction: rtl;
@@ -81,12 +79,17 @@
             background: #3498db;
             color: white;
             border: none;
-            padding: 8px 16px;
-            font-size: 16px;
+            padding: 10px;
+            font-size: 0;
             cursor: pointer;
-            border-radius: 6px;
-            margin: 0 4px;
+            border-radius: 8px;
+            margin: 0 6px;
             transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
         }
 
         .btn:hover {
@@ -114,6 +117,10 @@
             color: #7f8c8d;
             font-size: 16px;
         }
+
+        .btn svg {
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -123,23 +130,65 @@
 
         <div class="carousel" id="carousel">
             <div class="letter-name" id="letterName">Ба</div>
-
             <div class="forms" id="forms">بَ بِ بُ
                 بَـ ـبِـ ـبُ
                 بَبِبُ</div>
         </div>
 
         <div class="nav-buttons">
-            <button class="btn" id="prev">❮</button>
-            <button class="btn auto-on" id="playBtn">▶</button>
-            <button class="btn auto-off" id="stopBtn" style="display: none;">⏹</button>
-            <button class="btn" id="next">❯</button>
+            <!-- Кнопка "Вперёд" -->
+            <button class="btn" id="next" aria-label="Следующая буква">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9,18 15,12 9,6"></polyline>
+                </svg>
+            </button>
+
+            <!-- Кнопка звука -->
+            <button class="btn" id="audioBtn" aria-label="Воспроизвести звук">
+                <svg class="icon-play-sound" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11,5 6,9 2,9 2,15 6,15 11,19 11,5"></polygon>
+                    <path d="M15.54,8.46a5,5,0,0 1,0,7.07"></path>
+                    <path d="M19.07,4.93a10,10,0,0 1,0,14.14"></path>
+                </svg>
+                <svg class="icon-stop-sound" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" style="display: none;">
+                    <rect x="6" y="6" width="12" height="12"></rect>
+                </svg>
+            </button>
+
+            <!-- Кнопка "Авто-воспроизведение" -->
+            <button class="btn auto-on" id="playBtn" aria-label="Авто-проигрывание">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5,3 19,12 5,21 5,3"></polygon>
+                </svg>
+            </button>
+
+            <!-- Кнопка "Стоп" -->
+            <button class="btn auto-off" id="stopBtn" style="display: none;" aria-label="Остановить">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="6" y="6" width="12" height="12"></rect>
+                </svg>
+            </button>
+
+            <!-- Кнопка "Назад" -->
+            <button class="btn" id="prev" aria-label="Предыдущая буква">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15,18 9,12 15,6"></polyline>
+                </svg>
+            </button>
         </div>
+
         <div class="counter" id="counter">1 / 28</div>
     </div>
 
     <script>
         const letters = [
+            ['ا', 'Алиф'],
             ['ب', 'Ба'],
             ['ت', 'Та'],
             ['ث', 'Са'],
@@ -166,8 +215,7 @@
             ['ن', 'Нун'],
             ['ه', 'ХIа'],
             ['و', 'Ваув'],
-            ['ي', 'Йа'],
-            ['ا', 'Алиф']
+            ['ي', 'Йа']
         ];
 
         const carousel = document.getElementById('carousel');
@@ -178,10 +226,12 @@
         const nextBtn = document.getElementById('next');
         const playBtn = document.getElementById('playBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const audioBtn = document.getElementById('audioBtn');
 
         let currentIndex = 0;
         let autoPlayInterval = null;
-        const AUTO_PLAY_DELAY = 3000;
+        let isAutoMode = false;
+        let currentAudio = null;
 
         const fatHa = '\u064E'; // ـَ
         const kasRa = '\u0650'; // ـِ
@@ -212,9 +262,21 @@
             return [l1, l2, l3].join('\n');
         }
 
-        function updateSlide(index) {
+        function toggleAudioIcon(isPlaying) {
+            const playIcon = audioBtn.querySelector('.icon-play-sound');
+            const stopIcon = audioBtn.querySelector('.icon-stop-sound');
+            if (isPlaying) {
+                playIcon.style.display = 'none';
+                stopIcon.style.display = 'block';
+            } else {
+                playIcon.style.display = 'block';
+                stopIcon.style.display = 'none';
+            }
+        }
+
+        function updateSlide(index, playAudio = false) {
             const [letter, name] = letters[index];
-            letterNameEl.textContent = name; // Только русское название
+            letterNameEl.textContent = name;
 
             const formsText = getForms(letter);
             let html = formsText
@@ -224,33 +286,107 @@
 
             formsEl.innerHTML = html;
             counterEl.textContent = `${index + 1} / ${letters.length}`;
+
+            if (playAudio) {
+                playAudioForIndex(index);
+                if (!isAutoMode) {
+                    toggleAudioIcon(true);
+                }
+            } else {
+                if (!isAutoMode) {
+                    toggleAudioIcon(false);
+                }
+            }
         }
 
-        function nextSlide() {
+        function playAudioForIndex(index) {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            const trackNumber = String(index + 1).padStart(2, '0');
+            const audioPath = `../abjad/tracks/track${trackNumber}.ogg`;
+
+            currentAudio = new Audio(audioPath);
+            currentAudio.onended = () => {
+                currentAudio = null;
+                if (!isAutoMode) {
+                    toggleAudioIcon(false);
+                }
+            };
+
+            currentAudio.play().catch(err => {
+                console.error("Ошибка воспроизведения:", err);
+                alert("Не удалось воспроизвести звук. Проверьте консоль (F12) и файлы.");
+            });
+        }
+
+        function nextSlide(playAudio = false) {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
             currentIndex = (currentIndex + 1) % letters.length;
-            updateSlide(currentIndex);
+            updateSlide(currentIndex, playAudio);
         }
 
         function prevSlide() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
             currentIndex = (currentIndex - 1 + letters.length) % letters.length;
             updateSlide(currentIndex);
         }
 
         function startAutoPlay() {
+            isAutoMode = true;
             if (autoPlayInterval) clearInterval(autoPlayInterval);
-            autoPlayInterval = setInterval(nextSlide, AUTO_PLAY_DELAY);
+
+            // Сбрасываем иконку звука: показываем только "динамик"
+            toggleAudioIcon(false); // false = показать динамик
+
+            // Воспроизводим текущую букву
+            updateSlide(currentIndex, true);
+
+            autoPlayInterval = setInterval(() => {
+                nextSlide(true);
+            }, 5000);
+
             playBtn.style.display = 'none';
             stopBtn.style.display = 'inline-block';
         }
 
         function stopAutoPlay() {
+            isAutoMode = false;
             if (autoPlayInterval) {
                 clearInterval(autoPlayInterval);
                 autoPlayInterval = null;
             }
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
             stopBtn.style.display = 'none';
             playBtn.style.display = 'inline-block';
+            if (!isAutoMode) {
+                toggleAudioIcon(false);
+            }
         }
+
+        audioBtn.addEventListener('click', () => {
+            if (isAutoMode) return; // Игнорируем в авто-режиме
+
+            if (currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+                currentAudio = null;
+                toggleAudioIcon(false);
+            } else {
+                playAudioForIndex(currentIndex);
+                toggleAudioIcon(true);
+            }
+        });
 
         playBtn.addEventListener('click', startAutoPlay);
         stopBtn.addEventListener('click', stopAutoPlay);
@@ -275,12 +411,8 @@
             }
         });
 
-        carousel.addEventListener('mouseenter', stopAutoPlay);
-        carousel.addEventListener('mouseleave', () => {
-            // Автопрокрутка не возобновляется автоматически
-        });
+        // carousel.addEventListener('mouseenter', stopAutoPlay);
 
-        // Инициализация — без автопрокрутки
         updateSlide(currentIndex);
     </script>
 </body>
